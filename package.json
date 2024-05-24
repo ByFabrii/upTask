@@ -1,0 +1,19 @@
+{
+  "name": "uptask-php-mvc-sass",
+  "version": "1.0.0",
+  "description": "UpTask - Curso Desarrollo web Completo",
+  "author": "Fabrizzio Carbonell",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "gulp",
+    "build": "gulp_build"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-sass": "^5.1.0",
+    "gulp-terser": "^2.1.0",
+    "sass": "^1.75.0"
+  }
+}
