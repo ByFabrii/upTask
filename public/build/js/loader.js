@@ -1,0 +1,1 @@
+function mostrarLoader(){const e=document.getElementById("loader");e&&(e.style.display="flex")}function ocultarLoader(){const e=document.getElementById("loader");e&&(e.style.display="none")}

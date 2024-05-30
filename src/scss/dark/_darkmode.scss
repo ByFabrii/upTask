@@ -39,7 +39,7 @@
         .sidebar-nav a {
             &.activo,
             &:hover {
-                background-color: v.$naranja;
+                background-color: v.$azul;
             }
         }
     }
@@ -56,7 +56,7 @@
             }
         }
         .cerrar-sesion {
-            @include m.boton(v.$naranja, v.$blanco);
+            @include m.boton(darken($grisOscuro, 7%), v.$naranja);
             padding: 1rem;
             font-size: 1.2rem;
         }
@@ -69,7 +69,7 @@
             color: v.$blanco;
         }
         input[type="radio"] {
-            accent-color: v.$naranja;
+            accent-color: v.$azul;
         }
     }
 

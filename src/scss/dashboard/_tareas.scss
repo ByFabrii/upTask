@@ -6,7 +6,7 @@
     justify-content: center; 
 
     .agregar-tarea {
-        @include m.boton(v.$cyan, v.$blanco);
+        @include m.boton(v.$azul, v.$blanco);
     }
 }
 
@@ -51,11 +51,11 @@
             }
         }
         .completa {
-            background-color: v.$azul;
+            background-color: v.$verde;
             color: v.$blanco;
         }
         .pendiente {
-            background-color: v.$naranja;
+            background-color: v.$azul;
             color: v.$blanco;
         }
         .eliminar-tarea {

@@ -10,11 +10,32 @@
         mostrarFormulario();
     });
 
+   // Atajo de teclado para abrir el modal de agregar tarea
+    document.addEventListener('keydown', function(event) {
+        if (event.altKey && event.key.toLowerCase() === 'n') {
+            event.preventDefault();
+            mostrarFormulario();
+        }
+    });
+
+    // Atajo de teclado para cerrar la modal de agregar
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modal = document.querySelector('.modal');
+        if (modal) {
+            // modal.remove(); // Cambia esto a:
+            modal.style.display = "none";
+        }
+    }
+});
+
+
+
     // Filtros de búsqueda
     const filtros = document.querySelectorAll('#filtros input[type="radio');
-    filtros.forEach( radio => {
+    filtros.forEach(radio => {
         radio.addEventListener('input', filtrarTareas);
-    } )
+    });
 
     function filtrarTareas(e) {
         const filtro = e.target.value;
@@ -29,6 +50,7 @@
     }
 
     async function obtenerTareas() {
+        mostrarLoader();
         try {
             const id = obtenerProyecto();
             const url = `/api/tareas?id=${id}`;
@@ -40,6 +62,8 @@
         
         } catch (error) {
             console.log(error);
+        } finally {
+            ocultarLoader();
         }
     }
 
@@ -61,7 +85,6 @@
             return;
         }
 
-
         const estados = {
             0: 'Pendiente',
             1: 'Completa'
@@ -75,7 +98,7 @@
             const nombreTarea = document.createElement('P');
             nombreTarea.textContent = tarea.nombre;
             nombreTarea.ondblclick = function() {
-                mostrarFormulario(editar = true, {...tarea});
+                mostrarFormulario(true, {...tarea});
             }
 
             const opcionesDiv = document.createElement('DIV');
@@ -84,7 +107,7 @@
             // Botones
             const btnEstadoTarea = document.createElement('BUTTON');
             btnEstadoTarea.classList.add('estado-tarea');
-            btnEstadoTarea.classList.add(`${estados[tarea.estado].toLowerCase()}`)
+            btnEstadoTarea.classList.add(`${estados[tarea.estado].toLowerCase()}`);
             btnEstadoTarea.textContent = estados[tarea.estado];
             btnEstadoTarea.dataset.estadoTarea = tarea.estado;
             btnEstadoTarea.ondblclick = function() {
@@ -120,6 +143,7 @@
             pendientesRadio.disabled = false;
         }   
     }
+
     function totalCompletas() {
         const totalCompletas = tareas.filter(tarea => tarea.estado === "1");
         const completasRadio = document.querySelector('#completadas');
@@ -131,7 +155,7 @@
         }   
     }
 
-    function mostrarFormulario( editar = false, tarea = {} ) {
+    function mostrarFormulario(editar = false, tarea = {}) {
         console.log(tarea);
         const modal = document.createElement('DIV');
         modal.classList.add('modal');
@@ -146,6 +170,7 @@
                         placeholder="${tarea.nombre ? 'Edita la Tarea' : 'Añadir Tarea al Proyecto Actual'}"
                         id="tarea"
                         value="${tarea.nombre ? tarea.nombre : ''}"
+                        autofocus
                     />
                 </div>
                 <div class="opciones">
@@ -158,12 +183,13 @@
                 </div>
             </form>
         `;
-
+    
         setTimeout(() => {
             const formulario = document.querySelector('.formulario');
             formulario.classList.add('animar');
-        }, 0);
-
+            document.querySelector('#tarea').focus();  // Auto-focus en el campo de tarea
+        }, 150);
+    
         modal.addEventListener('click', function(e) {
             e.preventDefault();
             if(e.target.classList.contains('cerrar-modal')) {
@@ -175,25 +201,25 @@
             } 
             if(e.target.classList.contains('submit-nueva-tarea')) {
                 const nombreTarea = document.querySelector('#tarea').value.trim();
-
+    
                 if(nombreTarea === '') {
                     // Mostrar una alerta de error
-                    mostrarAlerta('El Nombre de la tarea es Obligatorio', 'error', document.querySelector('.formulario legend'));
+                    mostrarAlerta('El Nombre de la tarea es Obligatorio', 'error');
                     return;
                 } 
-
+    
                 if(editar) {
                     tarea.nombre = nombreTarea;
                     actualizarTarea(tarea);
                 } else {
                     agregarTarea(nombreTarea);
                 }
-                
             }
-        })
-
+        });
+    
         document.querySelector('.dashboard').appendChild(modal);
     }
+    
 
     // Muestra un mensaje en la interfaz
     function mostrarAlerta(mensaje, tipo, referencia) {
@@ -202,7 +228,6 @@
         if(alertaPrevia) {
             alertaPrevia.remove();
         }
-
 
         const alerta = document.createElement('DIV');
         alerta.classList.add('alerta', tipo);
@@ -217,8 +242,24 @@
         }, 5000);
     }
 
+    // Funciones para mostrar y ocultar el loader
+    function mostrarLoader() {
+        const loader = document.getElementById('loader');
+        if(loader) {
+            loader.style.display = 'flex';
+        }
+    }
+
+    function ocultarLoader() {
+        const loader = document.getElementById('loader');
+        if(loader) {
+            loader.style.display = 'none';
+        }
+    }
+
     // Consultar el Servidor para añadir una nueva tarea al proyecto actual
     async function agregarTarea(tarea) {
+        mostrarLoader();
         // Construir la petición
         const datos = new FormData();
         datos.append('nombre', tarea);
@@ -243,7 +284,7 @@
                 const modal = document.querySelector('.modal');
                 setTimeout(() => {
                     modal.remove();
-                }, 3000);
+                }, 500);
 
                 // Agregar el objeto de tarea al global de tareas
                 const tareaObj = {
@@ -259,6 +300,8 @@
             }
         } catch (error) {
             console.log(error);
+        } finally {
+            ocultarLoader();
         }
     }
 
@@ -269,6 +312,7 @@
     }
 
     async function actualizarTarea(tarea) {
+        mostrarLoader();
 
         const {estado, id, nombre, proyectoId} = tarea;
         
@@ -287,8 +331,6 @@
             });
             const resultado = await respuesta.json();
 
-            // console.log(resultado);
-
             if(resultado.respuesta.tipo === 'exito') {
                 Swal.fire(
                     resultado.respuesta.mensaje,
@@ -300,8 +342,6 @@
                 if(modal) {
                     modal.remove();
                 }
-               
-                
 
                 tareas = tareas.map(tareaMemoria => {
                     if(tareaMemoria.id === id) {
@@ -316,6 +356,8 @@
             }
         } catch (error) {
             console.log(error);
+        } finally {
+            ocultarLoader();
         }
     }
 
@@ -329,10 +371,11 @@
             if (result.isConfirmed) {
                 eliminarTarea(tarea);
             } 
-        })
+        });
     }
 
     async function eliminarTarea(tarea) {
+        mostrarLoader();
 
         const {estado, id, nombre} = tarea;
         
@@ -351,20 +394,15 @@
 
             const resultado = await respuesta.json();
             if(resultado.resultado) {
-                // mostrarAlerta(
-                //     resultado.mensaje, 
-                //     resultado.tipo, 
-                //     document.querySelector('.contenedor-nueva-tarea')
-                // );
-
                 Swal.fire('Eliminado!', resultado.mensaje, 'success');
 
-                tareas = tareas.filter( tareaMemoria => tareaMemoria.id !== tarea.id);
+                tareas = tareas.filter(tareaMemoria => tareaMemoria.id !== tarea.id);
                 mostrarTareas();
             }
-            
         } catch (error) {
-            
+            console.log(error);
+        } finally {
+            ocultarLoader();
         }
     }
 
