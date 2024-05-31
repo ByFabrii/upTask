@@ -41,6 +41,7 @@
             color: v.$blanco;
             margin: 0;
             text-align: center;
+            font-size: 4.5rem;
         }
         .cerrar-menu {
             display: flex;
@@ -80,7 +81,7 @@
             }
 
             @include m.tablet {
-                font-size: 1.2rem;
+                font-size: 1.8rem;
                 margin-bottom: 1rem;
                 text-align: left;
             }

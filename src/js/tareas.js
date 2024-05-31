@@ -23,8 +23,8 @@ document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         const modal = document.querySelector('.modal');
         if (modal) {
-            // modal.remove(); // Cambia esto a:
-            modal.style.display = "none";
+            modal.remove(); // Cambia esto a:
+            //modal.style.display = "none";
         }
     }
 });

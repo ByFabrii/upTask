@@ -3,7 +3,7 @@
         'name' => 'codigoconjuan/up-task_mvc',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'e8746004662b6ba280405b08f4379a3266f2d3a9',
+        'reference' => '1d356777275d2ec7ab37fde912c57c94e863e041',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'codigoconjuan/up-task_mvc' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'e8746004662b6ba280405b08f4379a3266f2d3a9',
+            'reference' => '1d356777275d2ec7ab37fde912c57c94e863e041',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -12,7 +12,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.8); /* Color blanco semitransparente */
+    background: rgba(0, 0, 0, 0.5); /* Color blanco semitransparente */
     display: flex;
     justify-content: center;
     align-items: center;
