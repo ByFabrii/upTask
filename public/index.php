@@ -35,6 +35,13 @@ $router->get('/confirmar', [LoginController::class, 'confirmar']);
 $router->get('/dashboard', [DashboardController::class, 'index']);
 $router->get('/crear-proyecto', [DashboardController::class, 'crear_proyecto']);
 $router->post('/crear-proyecto', [DashboardController::class, 'crear_proyecto']);
+
+//Agregar aquí las rutas para editar, duplicar y eliminar proyectos.
+$router->get('/editar-proyecto', [DashboardController::class, 'editar_proyecto']);
+$router->post('/editar-proyecto', [DashboardController::class, 'editar_proyecto']);
+
+$router->post('/eliminar-proyecto', [DashboardController::class, 'eliminar_proyecto']);
+
 $router->get('/proyecto', [DashboardController::class, 'proyecto']);
 $router->get('/perfil', [DashboardController::class, 'perfil']);
 $router->post('/perfil', [DashboardController::class, 'perfil']);

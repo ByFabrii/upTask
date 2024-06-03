@@ -56,6 +56,70 @@ class DashboardController {
         ]);
     }
 
+    public static function editar_proyecto(Router $router) {
+        session_start();
+        isAuth();
+        $alertas = [];
+
+        // Obtener el ID del proyecto desde la URL
+        $id = $_GET['id'];
+
+        // Verificar que el proyecto exista y pertenezca al usuario autenticado
+        $proyecto = Proyecto::find($id);
+
+        if (!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) {
+            // Redirigir o mostrar un mensaje de error si el proyecto no existe o no pertenece al usuario
+            header('Location: /dashboard');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Sincronizar los datos del proyecto con los datos del formulario
+            $proyecto->sincronizar($_POST);
+
+            // Validar el proyecto
+            $alertas = $proyecto->validarProyecto();
+
+            if (empty($alertas)) {
+                // Guardar los cambios
+                $proyecto->guardar();
+
+                // Redireccionar
+                header('Location: /proyecto?id=' . $proyecto->url);
+            }
+        }
+
+        $router->render('dashboard/editar-proyecto', [
+            'alertas' => $alertas,
+            'titulo' => 'Editar Proyecto',
+            'proyecto' => $proyecto
+        ]);
+    }
+
+    public static function eliminar_proyecto(Router $router) {
+        session_start();
+        isAuth();
+
+        // Verificar si se envió el ID del proyecto mediante POST
+        $id = $_POST['id'];
+
+        // Verificar que el proyecto exista y pertenezca al usuario autenticado
+        $proyecto = Proyecto::find($id);
+
+        if (!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) {
+            // Redirigir o mostrar un mensaje de error si el proyecto no existe o no pertenece al usuario
+            header('Location: /dashboard');
+            return;
+        }
+
+        // Eliminar el proyecto
+        $proyecto->eliminar();
+
+        // Redirigir a la lista de proyectos
+        header('Location: /dashboard');
+    }    
+    
+
     public static function proyecto(Router $router) {
         session_start();
         isAuth();
