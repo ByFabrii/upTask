@@ -7,8 +7,7 @@
                 class="agregar-tarea"
                 id="agregar-tarea"
             >&#43; Nueva Tarea</button>
-        </div>
-
+        </div> 
         <div id="filtros" class="filtros">
             <div class="filtros-inputs">
                 <h2>Filtros:</h2>
@@ -46,6 +45,7 @@
         </div>
 
         <ul id="listado-tareas" class="listado-tareas"></ul>
+        
     </div>
 
 <?php include_once __DIR__ . '/../templates/loader.php'; ?>
