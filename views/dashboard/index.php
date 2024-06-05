@@ -15,13 +15,18 @@
                         <button class="dropbtn"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-content">
                             <a href="/editar-proyecto?id=<?php echo $proyecto->id; ?>">Editar</a>
-                            <a href="/duplicar?id=<?php echo $proyecto->id; ?>">Duplicar</a>
+                            <!-- Formulario para duplicar proyecto -->
+                            <form method="POST" action="/duplicar-proyecto" style="display:inline;">
+                                <input type="hidden" name="id" value="<?php echo $proyecto->id; ?>">
+                                <button type="submit" class="link-button">Duplicar</button>
+                            </form>
                             <form method="POST" action="/eliminar-proyecto">
                                 <input type="hidden" name="id" value="<?php echo $proyecto->id; ?>">
                                 <button type="submit" class="link-button">Eliminar</button>
                             </form>
                         </div>
                     </div>
+
                 </li>
             <?php } ?>
         </ul>

@@ -4,6 +4,7 @@ namespace Controllers;
 
 use MVC\Router;
 use Model\Usuario;
+use Model\Tarea;
 use Model\Proyecto;
 
 
@@ -119,6 +120,53 @@ class DashboardController {
         header('Location: /dashboard');
     }    
     
+    // DashboardController.php
+public static function duplicar_proyecto(Router $router) {
+    session_start();
+    isAuth();
+
+    $id = $_POST['id'];
+    $proyecto = Proyecto::find($id);
+
+    if (!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) {
+        header('Location: /dashboard');
+        return;
+    }
+
+    $nuevoProyecto = new Proyecto([
+        'proyecto' => $proyecto->proyecto . ' (Duplicado)',
+        'url' => md5(uniqid()),
+        'propietarioId' => $proyecto->propietarioId
+    ]);
+    $nuevoProyecto->guardar();
+
+    if (!$nuevoProyecto->id) {
+        error_log("Error: No se pudo guardar el nuevo proyecto.");
+        header('Location: /dashboard');
+        return;
+    }
+
+    // Obtener las tareas del proyecto original
+    $tareas = Tarea::where('proyectoId', $proyecto->id);
+    
+    // Agregar depuración para verificar las tareas obtenidas
+    error_log("Tareas obtenidas: " . print_r($tareas, true));
+
+    foreach ($tareas as $tarea) {
+        $nuevaTarea = new Tarea([
+            'nombre' => $tarea->nombre,
+            'estado' => $tarea->estado,
+            'proyectoId' => $nuevoProyecto->id
+        ]);
+        $nuevaTarea->guardar();
+
+        // Agregar depuración para verificar cada tarea duplicada
+        error_log("Nueva tarea duplicada: " . print_r($nuevaTarea, true));
+    }
+
+    header('Location: /dashboard');
+}
+
 
     public static function proyecto(Router $router) {
         session_start();

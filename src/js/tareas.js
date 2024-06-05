@@ -67,71 +67,134 @@ document.addEventListener('keydown', function(event) {
         }
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener todos los enlaces de duplicar proyecto
+        const duplicarProyectoLinks = document.querySelectorAll('.duplicar-proyecto');
+    
+        duplicarProyectoLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const proyectoId = e.target.dataset.id;
+    
+                duplicarProyecto(proyectoId);
+            });
+        });
+    
+        async function duplicarProyecto(proyectoId) {
+            try {
+                const datos = new FormData();
+                datos.append('id', proyectoId);
+    
+                const url = '/duplicar-proyecto';
+                const respuesta = await fetch(url, {
+                    method: 'POST',
+                    body: datos
+                });
+    
+                const resultado = await respuesta.json();
+                if (resultado.resultado) {
+                    Swal.fire('Duplicado!', resultado.mensaje, 'success');
+                    // Actualizar la lista de proyectos o realizar alguna acción adicional si es necesario
+                    location.reload();
+                } else {
+                    Swal.fire('Error!', 'No se pudo duplicar el proyecto', 'error');
+                }
+            } catch (error) {
+                console.error('Error al duplicar el proyecto:', error);
+                Swal.fire('Error!', 'No se pudo duplicar el proyecto', 'error');
+            }
+        }
+    });
+    
+
     function mostrarTareas() {
         limpiarTareas();
         totalPendientes();
         totalCompletas();
-
+    
         const arrayTareas = filtradas.length ? filtradas : tareas;
-
-        if(arrayTareas.length === 0) {
+    
+        if (arrayTareas.length === 0) {
             const contenedorTareas = document.querySelector('#listado-tareas');
-
+    
             const textoNoTareas = document.createElement('LI');
             textoNoTareas.textContent = 'No Hay Tareas';
             textoNoTareas.classList.add('no-tareas');
-
+    
             contenedorTareas.appendChild(textoNoTareas);
             return;
         }
-
+    
         const estados = {
             0: 'Pendiente',
             1: 'Completa'
         }
-
+    
         arrayTareas.forEach(tarea => {
             const contenedorTarea = document.createElement('LI');
             contenedorTarea.dataset.tareaId = tarea.id;
             contenedorTarea.classList.add('tarea');
-
+    
             const nombreTarea = document.createElement('P');
             nombreTarea.textContent = tarea.nombre;
-            nombreTarea.ondblclick = function() {
-                mostrarFormulario(true, {...tarea});
-            }
-
+    
             const opcionesDiv = document.createElement('DIV');
             opcionesDiv.classList.add('opciones');
-
+    
             // Botones
             const btnEstadoTarea = document.createElement('BUTTON');
             btnEstadoTarea.classList.add('estado-tarea');
             btnEstadoTarea.classList.add(`${estados[tarea.estado].toLowerCase()}`);
             btnEstadoTarea.textContent = estados[tarea.estado];
             btnEstadoTarea.dataset.estadoTarea = tarea.estado;
-            btnEstadoTarea.ondblclick = function() {
-                cambiarEstadoTarea({...tarea});
+            btnEstadoTarea.onclick = function () {
+                cambiarEstadoTarea({ ...tarea });
             }
-
+    
+            // Botón de editar tarea con ícono de lápiz
+            const btnEditarTarea = document.createElement('BUTTON');
+            btnEditarTarea.classList.add('editar-tarea');
+            btnEditarTarea.dataset.idTarea = tarea.id;
+    
+            // Crear el ícono de lápiz usando Font Awesome
+            const iconoEditar = document.createElement('I');
+            iconoEditar.classList.add('fas', 'fa-pencil-alt'); // Clases de Font Awesome para el ícono de lápiz
+    
+            // Añadir el ícono al botón
+            btnEditarTarea.appendChild(iconoEditar);
+    
+            btnEditarTarea.onclick = function () {
+                mostrarFormulario(true, { ...tarea });
+            }
+    
             const btnEliminarTarea = document.createElement('BUTTON');
             btnEliminarTarea.classList.add('eliminar-tarea');
             btnEliminarTarea.dataset.idTarea = tarea.id;
-            btnEliminarTarea.textContent = 'Eliminar';
-            btnEliminarTarea.ondblclick = function() {
-                confirmarEliminarTarea({...tarea});
+    
+            // Crear el ícono de bote de basura usando Font Awesome
+            const iconoEliminar = document.createElement('I');
+            iconoEliminar.classList.add('fas', 'fa-trash-alt'); // Clases de Font Awesome para el ícono de bote de basura
+    
+            // Añadir el ícono al botón
+            btnEliminarTarea.appendChild(iconoEliminar);
+    
+            btnEliminarTarea.onclick = function () {
+                confirmarEliminarTarea({ ...tarea });
             }
-
+    
             opcionesDiv.appendChild(btnEstadoTarea);
+            opcionesDiv.appendChild(btnEditarTarea);
             opcionesDiv.appendChild(btnEliminarTarea);
-
+    
             contenedorTarea.appendChild(nombreTarea);
             contenedorTarea.appendChild(opcionesDiv);
-
+    
             const listadoTareas = document.querySelector('#listado-tareas');
             listadoTareas.appendChild(contenedorTarea);
         });
+    
     }
+    
 
     function totalPendientes() {
         const totalPendientes = tareas.filter(tarea => tarea.estado === "0");
