@@ -7,10 +7,11 @@ use Model\ActiveRecord;
 
 class Proyecto extends ActiveRecord {
     protected static $tabla = 'proyectos';
-    protected static $columnasDB = ['id', 'proyecto', 'url', 'propietarioId'];
+    protected static $columnasDB = ['id', 'proyecto', 'descripcion', 'url', 'propietarioId'];
 
     public $id;
     public $proyecto;
+    public $descripcion;
     public $url;
     public $propietarioId;
 
@@ -18,6 +19,7 @@ class Proyecto extends ActiveRecord {
     {
         $this->id = $args['id'] ?? null;
         $this->proyecto = $args['proyecto'] ?? '';
+        $this->descripcion = $args['descripcion'] ?? '';
         $this->url = $args['url'] ?? '';
         $this->propietarioId = $args['propietarioId'] ?? '';
     }

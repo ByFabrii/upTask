@@ -236,6 +236,17 @@ document.addEventListener('keydown', function(event) {
                         autofocus
                     />
                 </div>
+                <div class="campo">
+                    <label>Descripción</label>
+                    <textarea 
+                        type="text"
+                        name="descripcion"
+                        placeholder="${tarea.descripcion ? 'Edita la descripcion' : 'Añadir descripcion a la tarea Actual'}"
+                        id="descripcion"
+                        value="${tarea.descripcion ? tarea.descripcion : ''}"
+                        autofocus
+                    /></textarea>
+                </div>
                 <div class="opciones">
                     <input 
                         type="submit" 
@@ -329,7 +340,7 @@ document.addEventListener('keydown', function(event) {
         datos.append('proyectoId', obtenerProyecto());
 
         try {
-            const url = 'http://localhost:3000/api/tarea';
+            const url = '/api/tarea';
             const respuesta = await fetch(url, {
                 method: 'POST',
                 body: datos
@@ -386,7 +397,7 @@ document.addEventListener('keydown', function(event) {
         datos.append('proyectoId', obtenerProyecto());
 
         try {
-            const url = 'http://localhost:3000/api/tarea/actualizar';
+            const url = '/api/tarea/actualizar';
 
             const respuesta = await fetch(url, {
                 method: 'POST',
@@ -449,7 +460,7 @@ document.addEventListener('keydown', function(event) {
         datos.append('proyectoId', obtenerProyecto());
 
         try {
-            const url = 'http://localhost:3000/api/tarea/eliminar';
+            const url = '/api/tarea/eliminar';
             const respuesta = await fetch(url, {
                 method: 'POST',
                 body: datos

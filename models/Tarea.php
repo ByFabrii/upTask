@@ -6,16 +6,18 @@ use Model\ActiveRecord;
 
 class Tarea extends ActiveRecord {
     protected static $tabla = 'tareas';
-    protected static $columnasDB = ['id', 'nombre', 'estado', 'proyectoId'];
+    protected static $columnasDB = ['id', 'nombre', 'descripcion', 'estado', 'proyectoId'];
 
     public $id;
     public $nombre;
+    public $descripcion;
     public $estado;
     public $proyectoId;
 
     public function __construct($args = []) {
         $this->id = $args['id'] ?? null;
         $this->nombre = $args['nombre'] ?? '';
+        $this->descripcion = $args['descripcion'] ?? '';
         $this->estado = $args['estado'] ?? '';
         $this->proyectoId = $args['proyectoId'] ?? '';
     }
