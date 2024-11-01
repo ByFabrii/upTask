@@ -223,7 +223,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     openDropdowns.delete(taskId);
                 }
             };
+
+            const btnAgregarSubtarea = document.createElement('BUTTON');
+            btnAgregarSubtarea.classList.add('agregar-subtarea');
+            btnAgregarSubtarea.dataset.idTarea = tarea.id;
+
+            const iconoSubtarea = document.createElement('I');
+            iconoSubtarea.classList.add('fas', 'fa-plus');
+            btnAgregarSubtarea.appendChild(iconoSubtarea);
+
+            btnAgregarSubtarea.onclick = function() {
+                mostrarFormulario(false, { tareaPadreId: tarea.id });
+            };
     
+            opcionesDiv.appendChild(btnAgregarSubtarea);
             opcionesDiv.appendChild(btnDropdown);
             contenedorTarea.appendChild(contenedorSubtareas);
         }

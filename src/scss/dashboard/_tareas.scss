@@ -52,7 +52,7 @@
                 color: v.$blanco;
             }
             .pendiente {
-                background-color: v.$azul;
+                background-color: v.$indigo;
                 color: v.$blanco;
             }
             .editar-tarea {
@@ -69,6 +69,11 @@
                 background-color: transparent; /* Puedes personalizar este botón */
                 font-size: 1.3rem;
                 color: v.$blanco;
+            }
+            .agregar-subtarea {
+                background-color: v.$azul; // Using purple to differentiate from other actions
+                font-size: 1.3rem;          // Matching other action buttons size
+                color: v.$blanco;           // White text like other buttons
             }
         }
 
