@@ -14,59 +14,97 @@
     list-style: none;
     padding: 0;
     margin-top: 3rem;
+    
     .no-tareas {
         text-align: center;
         color: v.$naranja;
     }
-}
 
-.tarea {
-    padding: .5rem 2rem;
-    border-bottom: 2px solid darken(v.$grisClaro, 5%);
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    &:last-of-type {
-        border: none;
-    }
-
-    p {
-        font-size: 1.4rem;
-    }
-
-    .opciones {
+    .tarea, li, .subtareas .tarea  {
+        padding: .5rem 2rem;
+        border-bottom: 2px solid darken(v.$grisClaro, 5%);
+        margin-bottom: 1rem;
         display: flex;
-        gap: 1rem;
+        flex-direction: column; /* Cambiar a columna para que las subtareas estén debajo */
+        
+        p {
+            font-size: 1.4rem;
+        }
 
-        button {
-            border: none;
-            font-size: 1rem;
-            padding: .5rem 1rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            border-radius: 1rem;
+        .opciones {
+            display: flex;
+            gap: 1rem;
+            
+            button {
+                border: none;
+                font-size: 1rem;
+                padding: .5rem 1rem;
+                text-transform: uppercase;
+                font-weight: 700;
+                border-radius: 1rem;
 
-            &:hover {
-                cursor: pointer;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            .completa {
+                background-color: v.$verde;
+                color: v.$blanco;
+            }
+            .pendiente {
+                background-color: v.$azul;
+                color: v.$blanco;
+            }
+            .editar-tarea {
+                background-color: v.$naranja;
+                font-size: 1.3rem;
+                color: v.$blanco;
+            }
+            .eliminar-tarea {
+                background-color: v.$rojo;
+                font-size: 1.3rem;
+                color: v.$blanco;
+            }
+            .desplegar-tarea {
+                background-color: transparent; /* Puedes personalizar este botón */
+                font-size: 1.3rem;
+                color: v.$blanco;
             }
         }
-        .completa {
-            background-color: v.$verde;
-            color: v.$blanco;
+
+        .nombre-y-opciones{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
         }
-        .pendiente {
-            background-color: v.$azul;
-            color: v.$blanco;
-        }.editar-tarea {
-            background-color: v.$naranja;
-            font-size: 1.3rem;
-            color: v.$blanco;
-        }
-        .eliminar-tarea {
-            background-color: v.$rojo;
-            font-size: 1.3rem;
-            color: v.$blanco;
+
+        .subtareas {
+            padding-left: 0 !important; /* Indentación para subtareas */
+            display: none; /* Inicialmente oculto */
+            ul {
+                list-style: disc; /* Estilo de lista */
+                padding-left: 0rem !important; /* Espacio para la lista de subtareas */
+            }
+            li {
+                color: v.$blanco;
+                font-size: 1.3rem;
+            }
+            .tarea{
+                margin: 0;
+                padding: 0rem 1rem;
+            }
+            .opciones{
+                button {
+                    font-size: 1rem;
+                }
+                .editar-tarea {
+                    font-size: 1rem;
+                }
+                .eliminar-tarea {
+                    font-size: 1rem;
+                }
+            }
         }
     }
 }

@@ -6,13 +6,14 @@ use Model\ActiveRecord;
 
 class Tarea extends ActiveRecord {
     protected static $tabla = 'tareas';
-    protected static $columnasDB = ['id', 'nombre', 'descripcion', 'estado', 'proyectoId'];
+    protected static $columnasDB = ['id', 'nombre', 'descripcion', 'estado', 'proyectoId', 'tareaPadreId'];
 
     public $id;
     public $nombre;
     public $descripcion;
     public $estado;
     public $proyectoId;
+    public $tareaPadreId;
 
     public function __construct($args = []) {
         $this->id = $args['id'] ?? null;
@@ -20,6 +21,7 @@ class Tarea extends ActiveRecord {
         $this->descripcion = $args['descripcion'] ?? '';
         $this->estado = $args['estado'] ?? '';
         $this->proyectoId = $args['proyectoId'] ?? '';
+        $this->tareaPadreId = isset($args['tareaPadreId']) ? $args['tareaPadreId'] : null;
     }
 
     public function validarTarea() {

@@ -105,25 +105,23 @@ class ActiveRecord {
         ];
     }
 
-    public function actualizar() {
-        // Sanitizar los datos
+    protected function actualizar() {
         $atributos = $this->sanitizarAtributos();
-
-        // Iterar para ir agregando cada campo de la BD
         $valores = [];
+        
         foreach($atributos as $key => $value) {
-            $valores[] = "{$key}='{$value}'";
+            if($key === 'tareaPadreId' && $value === null) {
+                $valores[] = "`$key` = NULL";
+            } else {
+                $valores[] = "`$key` = '{$value}'";
+            }
         }
-
+    
         $query = "UPDATE " . static::$tabla ." SET ";
-        $query .=  join(', ', $valores );
-        $query .= " WHERE id = '" . self::$db->escape_string($this->id) . "' ";
-        $query .= " LIMIT 1 "; 
-
-        // debuguear($query);
-
-        $resultado = self::$db->query($query);
-        return $resultado;
+        $query .= join(', ', $valores);
+        $query .= " WHERE id = '" . self::$db->escape_string($this->id) . "' LIMIT 1";
+        
+        return self::$db->query($query);
     }
 
     // Eliminar un registro - Toma el ID de Active Record
@@ -174,11 +172,16 @@ class ActiveRecord {
         return $atributos;
     }
 
-    public function sanitizarAtributos() {
+    protected function sanitizarAtributos() {
         $atributos = $this->atributos();
         $sanitizado = [];
-        foreach($atributos as $key => $value ) {
-            $sanitizado[$key] = self::$db->escape_string($value);
+        
+        foreach($atributos as $key => $value) {
+            if($key === 'tareaPadreId' && $value === null) {
+                $sanitizado[$key] = null; // Keep null for tareaPadreId
+            } else {
+                $sanitizado[$key] = self::$db->escape_string($value);
+            }
         }
         return $sanitizado;
     }

@@ -1,4 +1,4 @@
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
 
     obtenerTareas();
     let tareas = [];
@@ -19,15 +19,15 @@
     });
 
     // Atajo de teclado para cerrar la modal de agregar
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        const modal = document.querySelector('.modal');
-        if (modal) {
-            modal.remove(); // Cambia esto a:
-            //modal.style.display = "none";
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                modal.remove(); // Cambia esto a:
+                //modal.style.display = "none";
+            }
         }
-    }
-});
+    });
 
 
 
@@ -39,13 +39,14 @@ document.addEventListener('keydown', function(event) {
 
     function filtrarTareas(e) {
         const filtro = e.target.value;
+        console.log('Filtro seleccionado:', filtro);
 
         if(filtro !== '') {
             filtradas = tareas.filter(tarea => tarea.estado === filtro);
         } else {
             filtradas = [];
         }
-
+        console.log('Tareas filtradas:', filtradas);
         mostrarTareas();
     }
 
@@ -57,11 +58,13 @@ document.addEventListener('keydown', function(event) {
             const respuesta = await fetch(url);
             const resultado = await respuesta.json();
 
+            console.log('Resultado de obtenerTareas:', resultado);
+
             tareas = resultado.tareas;
             mostrarTareas();
         
         } catch (error) {
-            console.log(error);
+            console.log('Error al obtener tareas:', error);
         } finally {
             ocultarLoader();
         }
@@ -105,95 +108,178 @@ document.addEventListener('keydown', function(event) {
             }
         }
     });
-    
 
+
+    function crearTareaItem(tarea, esSubtarea = false) {
+        const contenedorTarea = document.createElement('LI');
+        contenedorTarea.dataset.tareaId = tarea.id;
+        contenedorTarea.classList.add('tarea');
+    
+        // Crear un nuevo contenedor para el nombre y las opciones
+        const contenedorNombreYOpciones = document.createElement('DIV');
+        contenedorNombreYOpciones.classList.add('nombre-y-opciones');
+    
+        const nombreTarea = document.createElement('P');
+        nombreTarea.textContent = tarea.nombre;
+    
+        const opcionesDiv = document.createElement('DIV');
+        opcionesDiv.classList.add('opciones');
+    
+        const estados = { 0: 'Pendiente', 1: 'Completa' };
+    
+        // Botón de estado
+        const btnEstadoTarea = document.createElement('BUTTON');
+        btnEstadoTarea.classList.add('estado-tarea');
+    
+        // Comprobamos que el estado esté definido y sea válido
+        if (tarea.estado !== undefined && estados[tarea.estado]) {
+            btnEstadoTarea.classList.add(estados[tarea.estado].toLowerCase());
+            btnEstadoTarea.textContent = estados[tarea.estado];
+        } else {
+            btnEstadoTarea.classList.add('pendiente'); // Clase por defecto si el estado no es válido
+            btnEstadoTarea.textContent = 'Pendiente'; // Texto por defecto si el estado no es válido
+        }
+    
+        // Tareas y Subtareas
+        btnEstadoTarea.dataset.estadoTarea = tarea.estado ?? 0; // Estado predeterminado a 0 (Pendiente)
+        btnEstadoTarea.onclick = function() {
+            if (esSubtarea) {
+                cambiarEstadoSubtarea({ ...tarea });
+            } else {
+                cambiarEstadoTarea({
+                    ...tarea,
+                    tareaPadreId: null  // Force null for main tasks
+                });
+            }
+        };
+    
+        // Botón de editar
+        const btnEditarTarea = document.createElement('BUTTON');
+        btnEditarTarea.classList.add('editar-tarea');
+        btnEditarTarea.dataset.idTarea = tarea.id;
+    
+        const iconoEditar = document.createElement('I');
+        iconoEditar.classList.add('fas', 'fa-pencil-alt');
+        btnEditarTarea.appendChild(iconoEditar);
+    
+        btnEditarTarea.onclick = function () {
+            if (!esSubtarea) {
+                // For main tasks, ensure tareaPadreId is null
+                mostrarFormulario(true, { 
+                    ...tarea,
+                    tareaPadreId: null 
+                });
+            } else {
+                mostrarFormulario(true, { ...tarea });
+            }
+        };
+    
+        // Botón de eliminar
+        const btnEliminarTarea = document.createElement('BUTTON');
+        btnEliminarTarea.classList.add('eliminar-tarea');
+        btnEliminarTarea.dataset.idTarea = tarea.id;
+    
+        const iconoEliminar = document.createElement('I');
+        iconoEliminar.classList.add('fas', 'fa-trash-alt');
+        btnEliminarTarea.appendChild(iconoEliminar);
+    
+        btnEliminarTarea.onclick = function () {
+            confirmarEliminarTarea({ ...tarea });
+        };
+    
+        opcionesDiv.appendChild(btnEstadoTarea);
+        opcionesDiv.appendChild(btnEditarTarea);
+        opcionesDiv.appendChild(btnEliminarTarea);
+    
+        contenedorNombreYOpciones.appendChild(nombreTarea);
+        contenedorNombreYOpciones.appendChild(opcionesDiv);
+    
+        contenedorTarea.appendChild(contenedorNombreYOpciones);
+    
+        if (!esSubtarea) {
+            const btnDropdown = document.createElement('BUTTON');
+            btnDropdown.classList.add("desplegar-tarea");
+            btnDropdown.dataset.idTarea = tarea.id;
+    
+            const arrowIcon = document.createElement('I');
+            arrowIcon.classList.add('fas', 'fa-chevron-down');
+            btnDropdown.appendChild(arrowIcon);
+    
+            const contenedorSubtareas = document.createElement('DIV');
+            contenedorSubtareas.classList.add('subtareas');
+            contenedorSubtareas.style.display = 'none';
+    
+            const subtareasList = document.createElement('UL');
+            contenedorSubtareas.appendChild(subtareasList);
+
+            btnDropdown.onclick = function() {
+                const taskId = this.dataset.idTarea;
+                if (contenedorSubtareas.style.display === 'none') {
+                    mostrarSubtareas(tarea.subtareas, subtareasList);
+                    contenedorSubtareas.style.display = 'block';
+                    openDropdowns.add(taskId);
+                } else {
+                    contenedorSubtareas.style.display = 'none';
+                    openDropdowns.delete(taskId);
+                }
+            };
+    
+            opcionesDiv.appendChild(btnDropdown);
+            contenedorTarea.appendChild(contenedorSubtareas);
+        }
+    
+        return contenedorTarea;
+    }
+    
+    const openDropdowns = new Set();
+    
     function mostrarTareas() {
         limpiarTareas();
         totalPendientes();
         totalCompletas();
-    
+
         const arrayTareas = filtradas.length ? filtradas : tareas;
-    
+        const listadoTareas = document.querySelector('#listado-tareas');
+
         if (arrayTareas.length === 0) {
-            const contenedorTareas = document.querySelector('#listado-tareas');
-    
             const textoNoTareas = document.createElement('LI');
             textoNoTareas.textContent = 'No Hay Tareas';
             textoNoTareas.classList.add('no-tareas');
-    
-            contenedorTareas.appendChild(textoNoTareas);
+            listadoTareas.appendChild(textoNoTareas);
             return;
         }
-    
-        const estados = {
-            0: 'Pendiente',
-            1: 'Completa'
-        }
-    
+
+        // Remember which tasks had open subtasks
+        const openStates = new Set(openDropdowns);
+
         arrayTareas.forEach(tarea => {
-            const contenedorTarea = document.createElement('LI');
-            contenedorTarea.dataset.tareaId = tarea.id;
-            contenedorTarea.classList.add('tarea');
-    
-            const nombreTarea = document.createElement('P');
-            nombreTarea.textContent = tarea.nombre;
-    
-            const opcionesDiv = document.createElement('DIV');
-            opcionesDiv.classList.add('opciones');
-    
-            // Botones
-            const btnEstadoTarea = document.createElement('BUTTON');
-            btnEstadoTarea.classList.add('estado-tarea');
-            btnEstadoTarea.classList.add(`${estados[tarea.estado].toLowerCase()}`);
-            btnEstadoTarea.textContent = estados[tarea.estado];
-            btnEstadoTarea.dataset.estadoTarea = tarea.estado;
-            btnEstadoTarea.onclick = function () {
-                cambiarEstadoTarea({ ...tarea });
+            const tareaElement = crearTareaItem(tarea, false);
+            listadoTareas.appendChild(tareaElement);
+            
+            if (openStates.has(tarea.id.toString())) {
+                const contenedorSubtareas = tareaElement.querySelector('.subtareas');
+                const subtareasList = contenedorSubtareas.querySelector('ul');
+                mostrarSubtareas(tarea.subtareas, subtareasList);
+                contenedorSubtareas.style.display = 'block';
             }
-    
-            // Botón de editar tarea con ícono de lápiz
-            const btnEditarTarea = document.createElement('BUTTON');
-            btnEditarTarea.classList.add('editar-tarea');
-            btnEditarTarea.dataset.idTarea = tarea.id;
-    
-            // Crear el ícono de lápiz usando Font Awesome
-            const iconoEditar = document.createElement('I');
-            iconoEditar.classList.add('fas', 'fa-pencil-alt'); // Clases de Font Awesome para el ícono de lápiz
-    
-            // Añadir el ícono al botón
-            btnEditarTarea.appendChild(iconoEditar);
-    
-            btnEditarTarea.onclick = function () {
-                mostrarFormulario(true, { ...tarea });
-            }
-    
-            const btnEliminarTarea = document.createElement('BUTTON');
-            btnEliminarTarea.classList.add('eliminar-tarea');
-            btnEliminarTarea.dataset.idTarea = tarea.id;
-    
-            // Crear el ícono de bote de basura usando Font Awesome
-            const iconoEliminar = document.createElement('I');
-            iconoEliminar.classList.add('fas', 'fa-trash-alt'); // Clases de Font Awesome para el ícono de bote de basura
-    
-            // Añadir el ícono al botón
-            btnEliminarTarea.appendChild(iconoEliminar);
-    
-            btnEliminarTarea.onclick = function () {
-                confirmarEliminarTarea({ ...tarea });
-            }
-    
-            opcionesDiv.appendChild(btnEstadoTarea);
-            opcionesDiv.appendChild(btnEditarTarea);
-            opcionesDiv.appendChild(btnEliminarTarea);
-    
-            contenedorTarea.appendChild(nombreTarea);
-            contenedorTarea.appendChild(opcionesDiv);
-    
-            const listadoTareas = document.querySelector('#listado-tareas');
-            listadoTareas.appendChild(contenedorTarea);
         });
-    
     }
+    
+    function mostrarSubtareas(subtareas, contenedorSubtareas) {
+        contenedorSubtareas.innerHTML = '';
+    
+        if (subtareas.length === 0) {
+            const noSubtareas = document.createElement('LI');
+            noSubtareas.textContent = 'No hay subtareas relacionadas';
+            contenedorSubtareas.appendChild(noSubtareas);
+        } else {
+            subtareas.forEach(subtarea => {
+                const subtareaItem = crearTareaItem(subtarea, true);
+                contenedorSubtareas.appendChild(subtareaItem);
+            });
+        }
+    }
+    
     
 
     function totalPendientes() {
@@ -275,16 +361,27 @@ document.addEventListener('keydown', function(event) {
             } 
             if(e.target.classList.contains('submit-nueva-tarea')) {
                 const nombreTarea = document.querySelector('#tarea').value.trim();
-    
+            
                 if(nombreTarea === '') {
-                    // Mostrar una alerta de error
                     mostrarAlerta('El Nombre de la tarea es Obligatorio', 'error');
                     return;
                 } 
-    
+            
                 if(editar) {
                     tarea.nombre = nombreTarea;
-                    actualizarTarea(tarea);
+                    actualizarSubtarea(tarea).then(() => {
+                        // Close the form after successful update
+                        const formulario = document.querySelector('.formulario');
+                        formulario.classList.add('cerrar');
+                        
+                        // Remove the modal after animation
+                        setTimeout(() => {
+                            const modal = document.querySelector('.modal');
+                            if (modal) {
+                                modal.remove();
+                            }
+                        }, 500);
+                    });
                 } else {
                     agregarTarea(nombreTarea);
                 }
@@ -297,6 +394,7 @@ document.addEventListener('keydown', function(event) {
 
     // Muestra un mensaje en la interfaz
     function mostrarAlerta(mensaje, tipo, referencia) {
+        console.log(`Mostrando alerta: ${mensaje} de tipo ${tipo}`);
         // Previene la creación de multiples alertas
         const alertaPrevia = document.querySelector('.alerta');
         if(alertaPrevia) {
@@ -381,59 +479,88 @@ document.addEventListener('keydown', function(event) {
 
     function cambiarEstadoTarea(tarea) {
         const nuevoEstado = tarea.estado === "1" ? "0" : "1";
-        tarea.estado = nuevoEstado;
-        actualizarTarea(tarea);
+        console.log(`Cambiando estado de la tarea ID ${tarea.id} de ${tarea.estado} a ${nuevoEstado}`);
+        
+        // Create a new object without tareaPadreId
+        const { tareaPadreId, ...restTarea } = tarea;
+        actualizarSubtarea({
+            ...restTarea,
+            estado: nuevoEstado
+        });
     }
 
-    async function actualizarTarea(tarea) {
-        mostrarLoader();
+    function cambiarEstadoSubtarea(subtarea) {
+        const nuevoEstado = subtarea.estado === "1" ? "0" : "1";
+        console.log(`Cambiando estado de la subtarea ID ${subtarea.id} de ${subtarea.estado} a ${nuevoEstado}`);
+        subtarea.estado = nuevoEstado;
+        actualizarSubtarea(subtarea);
+    }
 
-        const {estado, id, nombre, proyectoId} = tarea;
-        
+    async function actualizarSubtarea(subtarea) {
+        mostrarLoader();
+    
+        const { estado, id, nombre, proyectoId, tareaPadreId } = subtarea;
+    
         const datos = new FormData();
         datos.append('id', id);
         datos.append('nombre', nombre);
         datos.append('estado', estado);
-        datos.append('proyectoId', obtenerProyecto());
-
+        datos.append('proyectoId', proyectoId);
+    
+        if (tareaPadreId) {
+            datos.append('tareaPadreId', tareaPadreId);
+        }
+    
         try {
             const url = '/api/tarea/actualizar';
-
             const respuesta = await fetch(url, {
                 method: 'POST',
                 body: datos
             });
+    
             const resultado = await respuesta.json();
-
-            if(resultado.respuesta.tipo === 'exito') {
-                Swal.fire(
-                    resultado.respuesta.mensaje,
-                    resultado.respuesta.mensaje,
-                    'success'
-                );
-
-                const modal = document.querySelector('.modal');
-                if(modal) {
-                    modal.remove();
+            if (resultado.exito) {
+                let itemIndex;
+                if (tareaPadreId) {
+                    const tareaPadre = tareas.find(t => t.id === tareaPadreId);
+                    if (tareaPadre && tareaPadre.subtareas) {
+                        itemIndex = tareaPadre.subtareas.findIndex(st => st.id === id);
+                        if (itemIndex !== -1) {
+                            tareaPadre.subtareas[itemIndex] = {
+                                ...tareaPadre.subtareas[itemIndex],
+                                estado,
+                                nombre,
+                                proyectoId
+                            };
+                        }
+                    }
+                } else {
+                    itemIndex = tareas.findIndex(t => t.id === id);
+                    if (itemIndex !== -1) {
+                        tareas[itemIndex] = {
+                            ...tareas[itemIndex],
+                            estado,
+                            nombre,
+                            proyectoId
+                        };
+                    }
                 }
-
-                tareas = tareas.map(tareaMemoria => {
-                    if(tareaMemoria.id === id) {
-                        tareaMemoria.estado = estado;
-                        tareaMemoria.nombre = nombre;
-                    } 
-
-                    return tareaMemoria;
-                });
-
+    
                 mostrarTareas();
+                Swal.fire({
+                    title: 'Estado actualizado',
+                    text: `El estado de la ${tareaPadreId ? 'subtarea' : 'tarea'} "${nombre}" ha sido actualizado.`,
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             ocultarLoader();
         }
     }
+    
 
     function confirmarEliminarTarea(tarea) {
         Swal.fire({
@@ -486,12 +613,13 @@ document.addEventListener('keydown', function(event) {
         return proyecto.id;
     }
 
+
+
     function limpiarTareas() {
         const listadoTareas = document.querySelector('#listado-tareas');
-        
         while(listadoTareas.firstChild) {
             listadoTareas.removeChild(listadoTareas.firstChild);
         }
     }
 
-})();
+});
