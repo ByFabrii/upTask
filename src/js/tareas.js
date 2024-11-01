@@ -396,7 +396,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }, 500);
                     });
                 } else {
-                    agregarTarea(nombreTarea);
+
+                    if(tarea.tareaPadreId) {
+                        agregarTarea(nombreTarea, tarea.tareaPadreId);
+                    } else {
+                        agregarTarea(nombreTarea);
+                    }
                 }
             }
         });
@@ -443,12 +448,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Consultar el Servidor para añadir una nueva tarea al proyecto actual
-    async function agregarTarea(tarea) {
+    async function agregarTarea(tarea, tareaPadreId) {
         mostrarLoader();
         // Construir la petición
         const datos = new FormData();
         datos.append('nombre', tarea);
         datos.append('proyectoId', obtenerProyecto());
+        if (tareaPadreId) {
+            datos.append('tareaPadreId', tareaPadreId);
+        }
+
 
         try {
             const url = '/api/tarea';
@@ -476,10 +485,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     id: String(resultado.id),
                     nombre: tarea,
                     estado: "0",
-                    proyectoId: resultado.proyectoId
+                    proyectoId: resultado.proyectoId,
+                    tareaPadreId: tareaPadreId
                 }
 
-                tareas = [...tareas, tareaObj];
+                if (tareaPadreId) {
+                    // Encontrar la tarea padre y actualizar sus subtareas
+                    const tareaPadre = tareas.find(t => t.id === tareaPadreId);
+                    if (tareaPadre) {
+                        if (!tareaPadre.subtareas) {
+                            tareaPadre.subtareas = [];
+                        }
+                        tareaPadre.subtareas.push(tareaObj);
+                        
+                        // Actualizar el DOM de las subtareas
+                        const contenedorSubtareas = document.querySelector(`li[data-tarea-id="${tareaPadreId}"] .subtareas ul`);
+                        if (contenedorSubtareas) {
+                            mostrarSubtareas(tareaPadre.subtareas, contenedorSubtareas);
+                        }
+                    }
+                } else {
+                    // Es una tarea principal
+                    tareas = [...tareas, tareaObj];
+                }
+                
                 mostrarTareas();
 
             }
@@ -489,6 +518,56 @@ document.addEventListener('DOMContentLoaded', function() {
             ocultarLoader();
         }
     }
+
+    // // Consultar el Servidor para añadir una nueva subtarea al proyecto actual
+    // async function agregarSubtarea(tarea, tareaPadreId) {
+    //     mostrarLoader();
+    //     // Construir la petición
+    //     const datos = new FormData();
+    //     datos.append('nombre', tarea);
+    //     datos.append('proyectoId', obtenerProyecto());
+    //     datos.append('tareaPadreId', tareaPadreId);
+
+    //     try {
+    //         const url = '/api/tarea';
+    //         const respuesta = await fetch(url, {
+    //             method: 'POST',
+    //             body: datos
+    //         });
+            
+    //         const resultado = await respuesta.json();
+            
+    //         mostrarAlerta(
+    //             resultado.mensaje, 
+    //             resultado.tipo, 
+    //             document.querySelector('.formulario legend')
+    //         );
+
+    //         if(resultado.tipo === 'exito') {
+    //             const modal = document.querySelector('.modal');
+    //             setTimeout(() => {
+    //                 modal.remove();
+    //             }, 500);
+
+    //             // Agregar el objeto de tarea al global de tareas
+    //             const tareaObj = {
+    //                 id: String(resultado.id),
+    //                 nombre: tarea,
+    //                 estado: "0",
+    //                 proyectoId: resultado.proyectoId,
+    //                 tareaPadreId: tareaPadreId
+    //             }
+
+    //             tareas = [...tareas, tareaObj];
+    //             mostrarSubtareas();
+
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //     } finally {
+    //         ocultarLoader();
+    //     }
+    // }
 
     function cambiarEstadoTarea(tarea) {
         const nuevoEstado = tarea.estado === "1" ? "0" : "1";
