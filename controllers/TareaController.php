@@ -53,13 +53,11 @@ class TareaController {
 
     public static function crear() {
         if($_SERVER['REQUEST_METHOD'] === 'POST') {
-
             session_start();
-
+    
             $proyectoId = $_POST['proyectoId'];
-
             $proyecto = Proyecto::where('url', $proyectoId);
-
+    
             if(!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) {
                 $respuesta = [
                     'tipo' => 'error',
@@ -68,17 +66,35 @@ class TareaController {
                 echo json_encode($respuesta);
                 return;
             } 
-            
+    
+            // Simplificar manejo de tareaPadreId
+            $tareaPadreId = $_POST['tareaPadreId'] ?? NULL;
+    
             // Todo bien, instanciar y crear la tarea
-            $tarea = new Tarea($_POST);
+            $tarea = new Tarea([
+                'nombre' => $_POST['nombre'],
+                'estado' => '0',
+                'tareaPadreId' => $tareaPadreId,
+                'descripcion' => $_POST['descripcion'] ?? ''
+            ]);
+            
             $tarea->proyectoId = $proyecto->id;
             $resultado = $tarea->guardar();
-            $respuesta = [
-                'tipo' => 'exito',
-                'id' => $resultado['id'],
-                'mensaje' => 'Tarea Creada Correctamente',
-                'proyectoId' => $proyecto->id
-            ];
+    
+            if($resultado) {
+                $respuesta = [
+                    'tipo' => 'exito',
+                    'id' => $resultado['id'],
+                    'mensaje' => 'Tarea Creada Correctamente',
+                    'proyectoId' => $proyecto->id
+                ];
+            } else {
+                $respuesta = [
+                    'tipo' => 'error',
+                    'mensaje' => 'Hubo un error al crear la tarea'
+                ];
+            }
+    
             echo json_encode($respuesta);
         }
     }
@@ -120,33 +136,50 @@ class TareaController {
     }
 
     public static function eliminar() {
-        if($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-            // Validar que el proyecto exista
-            $proyecto = Proyecto::where('url', $_POST['proyectoId']);
-
+        if($_SERVER['REQUEST_METHOD'] === 'DELETE') {
             session_start();
-
-            if(!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) {
+            
+            // Obtener el ID y el flag de eliminarSubtareas
+            $id = $_GET['id'];
+            $eliminarSubtareas = isset($_GET['eliminarSubtareas']) && $_GET['eliminarSubtareas'] === 'true';
+            
+            $tarea = Tarea::find($id);
+            if(!$tarea) {
                 $respuesta = [
                     'tipo' => 'error',
-                    'mensaje' => 'Hubo un Error al actualizar la tarea'
+                    'mensaje' => 'La tarea no existe'
                 ];
                 echo json_encode($respuesta);
                 return;
-            } 
-
-            $tarea = new Tarea($_POST);
-            $resultado = $tarea->eliminar();
-
-
-            $resultado = [
+            }
+    
+            $resultado = true; // Para rastrear si todas las eliminaciones fueron exitosas
+    
+            // Si se solicita eliminar subtareas
+            if($eliminarSubtareas) {
+                // Primero eliminar todas las subtareas
+                $subtareas = Tarea::whereAll('tareaPadreId', $id);
+                foreach($subtareas as $subtarea) {
+                    if(!$subtarea->eliminar()) {
+                        $resultado = false;
+                        break;
+                    }
+                }
+            }
+    
+            // Solo eliminar la tarea principal si las subtareas se eliminaron correctamente
+            if($resultado) {
+                $resultado = $tarea->eliminar();
+            }
+    
+            $respuesta = [
                 'resultado' => $resultado,
-                'mensaje' => 'Eliminado Correctamente',
-                'tipo' => 'exito'
+                'mensaje' => $resultado ? 
+                    ($eliminarSubtareas ? 'Tarea y subtareas eliminadas correctamente' : 'Tarea eliminada correctamente') : 
+                    'Error al eliminar la tarea'
             ];
             
-            echo json_encode($resultado);
+            echo json_encode($respuesta);
         }
     }
 }

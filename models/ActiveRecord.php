@@ -88,20 +88,30 @@ class ActiveRecord {
     public function crear() {
         // Sanitizar los datos
         $atributos = $this->sanitizarAtributos();
-
-        // Insertar en la base de datos
+    
+        // Construir el query
         $query = " INSERT INTO " . static::$tabla . " ( ";
         $query .= join(', ', array_keys($atributos));
-        $query .= " ) VALUES (' "; 
-        $query .= join("', '", array_values($atributos));
-        $query .= " ') ";
-        
+        $query .= " ) VALUES (";
+    
+        // Construir los valores, manejando NULL específicamente
+        $valores = [];
+        foreach($atributos as $key => $value) {
+            if($key === 'tareaPadreId' && $value === null) {
+                $valores[] = "NULL";
+            } else {
+                $valores[] = "'{$value}'";
+            }
+        }
+    
+        $query .= join(", ", $valores);
+        $query .= " ) ";
+    
         // Resultado de la consulta
         $resultado = self::$db->query($query);
-
         return [
-           'resultado' =>  $resultado,
-           'id' => self::$db->insert_id
+            'resultado' =>  $resultado,
+            'id' => self::$db->insert_id
         ];
     }
 
@@ -129,6 +139,11 @@ class ActiveRecord {
         $query = "DELETE FROM "  . static::$tabla . " WHERE id = " . self::$db->escape_string($this->id) . " LIMIT 1";
         $resultado = self::$db->query($query);
         return $resultado;
+    }
+
+    public static function whereAll($columna, $valor) {
+        $query = "SELECT * FROM " . static::$tabla . " WHERE {$columna} = '{$valor}'";
+        return self::consultarSQL($query);
     }
 
     public static function consultarSQL($query) {

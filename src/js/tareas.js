@@ -57,18 +57,32 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = `/api/tareas?id=${id}`;
             const respuesta = await fetch(url);
             const resultado = await respuesta.json();
-
+    
             console.log('Resultado de obtenerTareas:', resultado);
-
+    
             tareas = resultado.tareas;
             mostrarTareas();
-        
+    
+            // Una única inicialización del drag & drop después de que el DOM se actualice
+            requestAnimationFrame(() => {
+                try {
+                    // Esta única llamada manejará tanto tareas principales como subtareas
+                    inicializarDragAndDrop();
+                } catch (error) {
+                    console.error('Error al inicializar drag & drop:', error);
+                }
+            });
         } catch (error) {
             console.log('Error al obtener tareas:', error);
         } finally {
             ocultarLoader();
         }
     }
+    
+    // Asegurar inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+        obtenerTareas();
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         // Obtener todos los enlaces de duplicar proyecto
@@ -250,10 +264,10 @@ document.addEventListener('DOMContentLoaded', function() {
         limpiarTareas();
         totalPendientes();
         totalCompletas();
-
+    
         const arrayTareas = filtradas.length ? filtradas : tareas;
         const listadoTareas = document.querySelector('#listado-tareas');
-
+    
         if (arrayTareas.length === 0) {
             const textoNoTareas = document.createElement('LI');
             textoNoTareas.textContent = 'No Hay Tareas';
@@ -261,12 +275,24 @@ document.addEventListener('DOMContentLoaded', function() {
             listadoTareas.appendChild(textoNoTareas);
             return;
         }
-
-        // Remember which tasks had open subtasks
+    
         const openStates = new Set(openDropdowns);
-
+    
+        // Remover todos los listeners antiguos
+        const oldElements = document.querySelectorAll('.tarea');
+        oldElements.forEach(el => {
+            el.removeAttribute('draggable');
+            const newEl = el.cloneNode(true);
+            if (el.parentNode) {
+                el.parentNode.replaceChild(newEl, el);
+            }
+        });
+    
+        // Renderizar tareas
         arrayTareas.forEach(tarea => {
             const tareaElement = crearTareaItem(tarea, false);
+            
+            // Asegurar que el elemento está en el DOM antes de inicializar drag&drop
             listadoTareas.appendChild(tareaElement);
             
             if (openStates.has(tarea.id.toString())) {
@@ -275,6 +301,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 mostrarSubtareas(tarea.subtareas, subtareasList);
                 contenedorSubtareas.style.display = 'block';
             }
+        });
+    
+        // Asegurarnos que el DOM está completamente actualizado
+        requestAnimationFrame(() => {
+            inicializarDragAndDrop();
         });
     }
     
@@ -289,6 +320,15 @@ document.addEventListener('DOMContentLoaded', function() {
             subtareas.forEach(subtarea => {
                 const subtareaItem = crearTareaItem(subtarea, true);
                 contenedorSubtareas.appendChild(subtareaItem);
+            });
+            
+            // Inicializar drag & drop después de mostrar las subtareas
+            requestAnimationFrame(() => {
+                try {
+                    inicializarDragAndDrop();
+                } catch (error) {
+                    console.error('Error al inicializar drag & drop para subtareas:', error);
+                }
             });
         }
     }
@@ -448,17 +488,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Consultar el Servidor para añadir una nueva tarea al proyecto actual
-    async function agregarTarea(tarea, tareaPadreId) {
+    async function agregarTarea(tarea, tareaPadreId = null) {
         mostrarLoader();
-        // Construir la petición
         const datos = new FormData();
         datos.append('nombre', tarea);
         datos.append('proyectoId', obtenerProyecto());
-        if (tareaPadreId) {
+        
+        // No enviar el campo si es null
+        if (tareaPadreId !== null) {
             datos.append('tareaPadreId', tareaPadreId);
         }
-
-
+    
         try {
             const url = '/api/tarea';
             const respuesta = await fetch(url, {
@@ -473,22 +513,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultado.tipo, 
                 document.querySelector('.formulario legend')
             );
-
+    
             if(resultado.tipo === 'exito') {
                 const modal = document.querySelector('.modal');
                 setTimeout(() => {
                     modal.remove();
                 }, 500);
-
-                // Agregar el objeto de tarea al global de tareas
+    
                 const tareaObj = {
                     id: String(resultado.id),
                     nombre: tarea,
                     estado: "0",
                     proyectoId: resultado.proyectoId,
                     tareaPadreId: tareaPadreId
-                }
-
+                };
+    
                 if (tareaPadreId) {
                     // Encontrar la tarea padre y actualizar sus subtareas
                     const tareaPadre = tareas.find(t => t.id === tareaPadreId);
@@ -510,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 mostrarTareas();
-
             }
         } catch (error) {
             console.log(error);
@@ -518,56 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
             ocultarLoader();
         }
     }
-
-    // // Consultar el Servidor para añadir una nueva subtarea al proyecto actual
-    // async function agregarSubtarea(tarea, tareaPadreId) {
-    //     mostrarLoader();
-    //     // Construir la petición
-    //     const datos = new FormData();
-    //     datos.append('nombre', tarea);
-    //     datos.append('proyectoId', obtenerProyecto());
-    //     datos.append('tareaPadreId', tareaPadreId);
-
-    //     try {
-    //         const url = '/api/tarea';
-    //         const respuesta = await fetch(url, {
-    //             method: 'POST',
-    //             body: datos
-    //         });
-            
-    //         const resultado = await respuesta.json();
-            
-    //         mostrarAlerta(
-    //             resultado.mensaje, 
-    //             resultado.tipo, 
-    //             document.querySelector('.formulario legend')
-    //         );
-
-    //         if(resultado.tipo === 'exito') {
-    //             const modal = document.querySelector('.modal');
-    //             setTimeout(() => {
-    //                 modal.remove();
-    //             }, 500);
-
-    //             // Agregar el objeto de tarea al global de tareas
-    //             const tareaObj = {
-    //                 id: String(resultado.id),
-    //                 nombre: tarea,
-    //                 estado: "0",
-    //                 proyectoId: resultado.proyectoId,
-    //                 tareaPadreId: tareaPadreId
-    //             }
-
-    //             tareas = [...tareas, tareaObj];
-    //             mostrarSubtareas();
-
-    //         }
-    //     } catch (error) {
-    //         console.log(error);
-    //     } finally {
-    //         ocultarLoader();
-    //     }
-    // }
 
     function cambiarEstadoTarea(tarea) {
         const nuevoEstado = tarea.estado === "1" ? "0" : "1";
@@ -655,48 +643,306 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     function confirmarEliminarTarea(tarea) {
+        const tieneSubtareas = tarea.subtareas?.length > 0;
+        let mensaje = `¿Eliminar ${tarea.tareaPadreId ? 'Subtarea' : 'Tarea'}?`;
+        
+        if (tieneSubtareas) {
+            mensaje += `\nEsta tarea tiene ${tarea.subtareas.length} subtarea(s) que también se eliminarán.`;
+        }
+    
         Swal.fire({
-            title: '¿Eliminar Tarea?',
+            title: mensaje,
             showCancelButton: true,
-            confirmButtonText: 'Si',
+            confirmButtonText: 'Sí',
             cancelButtonText: 'No'
         }).then((result) => {
             if (result.isConfirmed) {
-                eliminarTarea(tarea);
-            } 
+                eliminarTareaConDeshacer(tarea);
+            }
         });
+    }
+
+    function eliminarTareaConDeshacer(tarea) {
+        // Guardar el estado actual para poder restaurar
+        const estadoAnterior = {
+            tarea: { ...tarea },
+            indice: tareas.findIndex(t => t.id === tarea.id),
+            subtareas: tarea.subtareas ? [...tarea.subtareas] : []
+        };
+    
+        // Eliminar temporalmente del UI
+        if (tarea.tareaPadreId) {
+            const tareaPadre = tareas.find(t => t.id === tarea.tareaPadreId);
+            if (tareaPadre && tareaPadre.subtareas) {
+                tareaPadre.subtareas = tareaPadre.subtareas.filter(st => st.id !== tarea.id);
+            }
+        } else {
+            tareas = tareas.filter(t => t.id !== tarea.id);
+        }
+        mostrarTareas();
+    
+        // Mostrar notificación con opción de deshacer
+        Swal.fire({
+            title: 'Eliminado temporalmente',
+            text: `${tarea.tareaPadreId ? 'Subtarea' : 'Tarea'} será eliminada permanentemente en 5 segundos`,
+            icon: 'warning',
+            showCancelButton: true,
+            cancelButtonText: 'Deshacer',
+            confirmButtonText: 'Eliminar ahora',
+            timer: 5000,
+            timerProgressBar: true
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                // Restaurar la tarea
+                if (tarea.tareaPadreId) {
+                    const tareaPadre = tareas.find(t => t.id === tarea.tareaPadreId);
+                    if (tareaPadre) {
+                        if (!tareaPadre.subtareas) tareaPadre.subtareas = [];
+                        tareaPadre.subtareas.push(estadoAnterior.tarea);
+                    }
+                } else {
+                    tareas.splice(estadoAnterior.indice, 0, estadoAnterior.tarea);
+                }
+                mostrarTareas();
+                Swal.fire('Restaurado', 'La tarea ha sido restaurada', 'success');
+            } else {
+                // Eliminar permanentemente
+                eliminarTareaPermanentemente(tarea);
+            }
+        });
+    }
+
+    async function eliminarTareaPermanentemente(tarea) {
+        mostrarLoader();
+        const { id } = tarea;
+    
+        try {
+            // El problema puede estar en cómo manejamos el array tareas
+            // antes de hacer la llamada al servidor
+            const url = `/api/tarea/eliminar?id=${id}&eliminarSubtareas=true`;
+            const respuesta = await fetch(url, {
+                method: 'DELETE'
+            });
+            const resultado = await respuesta.json();
+    
+            if (resultado.resultado) {
+                // Aquí deberíamos actualizar el array tareas correctamente
+                if (tarea.tareaPadreId) {
+                    // Si es una subtarea, encontrar el padre y eliminar del array
+                    const tareaPadre = tareas.find(t => t.id === tarea.tareaPadreId);
+                    if (tareaPadre && tareaPadre.subtareas) {
+                        tareaPadre.subtareas = tareaPadre.subtareas.filter(st => st.id !== id);
+                    }
+                } else {
+                    // Si es tarea principal, eliminar del array principal
+                    tareas = tareas.filter(t => t.id !== id);
+                }
+    
+                // Ahora sí mostrar las tareas actualizadas
+                mostrarTareas();
+                
+                Swal.fire(
+                    'Eliminado!',
+                    resultado.mensaje || `Tarea y subtareas eliminadas permanentemente`,
+                    'success'
+                );
+            }
+        } catch (error) {
+            console.error('Error al eliminar:', error);
+            Swal.fire('Error', 'No se pudo eliminar la tarea', 'error');
+            
+            // La restauración en caso de error parece correcta
+            if (tarea.tareaPadreId) {
+                const tareaPadre = tareas.find(t => t.id === tarea.tareaPadreId);
+                if (tareaPadre && !tareaPadre.subtareas) tareaPadre.subtareas = [];
+                if (tareaPadre) tareaPadre.subtareas.push(tarea);
+            } else {
+                tareas.push(tarea);
+            }
+            mostrarTareas();
+        } finally {
+            ocultarLoader();
+        }
     }
 
     async function eliminarTarea(tarea) {
         mostrarLoader();
-
-        const {estado, id, nombre} = tarea;
-        
-        const datos = new FormData();
-        datos.append('id', id);
-        datos.append('nombre', nombre);
-        datos.append('estado', estado);
-        datos.append('proyectoId', obtenerProyecto());
-
+        const { id, tareaPadreId } = tarea;
+    
         try {
-            const url = '/api/tarea/eliminar';
+            const url = `/api/tarea/eliminar?id=${id}`;
             const respuesta = await fetch(url, {
-                method: 'POST',
-                body: datos
+                method: 'DELETE'
             });
-
             const resultado = await respuesta.json();
+    
             if(resultado.resultado) {
-                Swal.fire('Eliminado!', resultado.mensaje, 'success');
-
-                tareas = tareas.filter(tareaMemoria => tareaMemoria.id !== tarea.id);
+                if(tareaPadreId) {
+                    // Es una subtarea - eliminarla del array de subtareas del padre
+                    const tareaPadre = tareas.find(t => t.id === tareaPadreId);
+                    if(tareaPadre && tareaPadre.subtareas) {
+                        tareaPadre.subtareas = tareaPadre.subtareas.filter(st => st.id !== id);
+                        
+                        // Actualizar el DOM de las subtareas
+                        const contenedorSubtareas = document.querySelector(`li[data-tarea-id="${tareaPadreId}"] .subtareas ul`);
+                        if(contenedorSubtareas) {
+                            mostrarSubtareas(tareaPadre.subtareas, contenedorSubtareas);
+                        }
+                    }
+                } else {
+                    // Es una tarea principal
+                    tareas = tareas.filter(t => t.id !== id);
+                }
+    
                 mostrarTareas();
+    
+                Swal.fire(
+                    'Eliminado!',
+                    `${tareaPadreId ? 'Subtarea' : 'Tarea'} eliminada correctamente`,
+                    'success'
+                );
             }
         } catch (error) {
             console.log(error);
         } finally {
             ocultarLoader();
         }
+    }
+
+    function inicializarDragAndDrop() {
+        const tareasElements = document.querySelectorAll('.tarea');
+        
+        tareasElements.forEach(tarea => {
+            const tareaId = tarea.dataset.tareaId;
+            const tareaObj = tareas.find(t => t.id === tareaId);
+            const esSubtarea = tarea.closest('.subtareas') !== null;
+            
+            // Marcar el elemento como ya inicializado
+            if (tarea.dataset.dragInitialized === 'true') {
+                return;
+            }
+            tarea.dataset.dragInitialized = 'true';
+
+            // Configurar arrastrable
+            if (!esSubtarea && tareaObj?.subtareas?.length > 0) {
+                tarea.classList.add('no-draggable');
+                tarea.setAttribute('draggable', 'false');
+                tarea.setAttribute('title', 'No se pueden mover tareas con subtareas');
+            } else {
+                tarea.setAttribute('draggable', 'true');
+                tarea.classList.remove('no-draggable');
+                
+                const handleDragStart = (e) => {
+                    e.stopPropagation();
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', tareaId);
+                    e.dataTransfer.setData('esSubtarea', esSubtarea);
+                };
+                
+                const handleDragEnd = (e) => {
+                    e.stopPropagation();
+                    e.target.classList.remove('dragging');
+                };
+                
+                tarea.addEventListener('dragstart', handleDragStart);
+                tarea.addEventListener('dragend', handleDragEnd);
+            }
+            
+            // Configurar zona de destino solo para tareas principales
+            if (!esSubtarea) {
+                const handleDragOver = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const tareaDestino = e.currentTarget;
+                    if (!tareaDestino.classList.contains('dragging')) {
+                        e.dataTransfer.dropEffect = 'move';
+                        tareaDestino.classList.add('dragover');
+                    }
+                };
+                
+                const handleDragLeave = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.currentTarget.classList.remove('dragover');
+                };
+                
+                const handleDrop = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const tareaDestino = e.currentTarget;
+                    tareaDestino.classList.remove('dragover');
+                    
+                    const tareaArrastradaId = e.dataTransfer.getData('text/plain');
+                    const esSubtareaArrastrada = e.dataTransfer.getData('esSubtarea') === 'true';
+                    const tareaPadreId = tareaDestino.dataset.tareaId;
+                    
+                    if (tareaArrastradaId === tareaPadreId) return;
+                    
+                    try {
+                        mostrarLoader();
+                        let tareaArrastrada = esSubtareaArrastrada ? 
+                            encontrarSubtarea(tareaArrastradaId) :
+                            tareas.find(t => t.id === tareaArrastradaId);
+                            
+                        const tareaPadre = tareas.find(t => t.id === tareaPadreId);
+                        
+                        if (!tareaArrastrada || !tareaPadre) {
+                            throw new Error('No se encontró la tarea');
+                        }
+                        
+                        if (!tareaPadre.subtareas) tareaPadre.subtareas = [];
+                        
+                        const nuevaSubtarea = {
+                            ...tareaArrastrada,
+                            tareaPadreId: tareaPadre.id
+                        };
+                        
+                        await actualizarSubtarea({
+                            id: nuevaSubtarea.id,
+                            nombre: nuevaSubtarea.nombre,
+                            estado: nuevaSubtarea.estado,
+                            proyectoId: nuevaSubtarea.proyectoId,
+                            tareaPadreId: tareaPadre.id
+                        });
+                        
+                        if (esSubtareaArrastrada) {
+                            for (const tarea of tareas) {
+                                if (tarea.subtareas?.some(st => st.id === tareaArrastradaId)) {
+                                    tarea.subtareas = tarea.subtareas.filter(st => st.id !== tareaArrastradaId);
+                                    break;
+                                }
+                            }
+                        } else {
+                            tareas = tareas.filter(t => t.id !== tareaArrastradaId);
+                        }
+                        
+                        tareaPadre.subtareas.push(nuevaSubtarea);
+                        mostrarTareas();
+                        Swal.fire('Éxito', 'Tarea movida correctamente', 'success');
+                    } catch (error) {
+                        console.error('Error al mover la tarea:', error);
+                        Swal.fire('Error', 'No se pudo mover la tarea', 'error');
+                    } finally {
+                        ocultarLoader();
+                    }
+                };
+                
+                tarea.addEventListener('dragover', handleDragOver);
+                tarea.addEventListener('dragleave', handleDragLeave);
+                tarea.addEventListener('drop', handleDrop);
+            }
+        });
+    }
+    
+    // Función auxiliar para encontrar una subtarea en cualquier tarea principal
+    function encontrarSubtarea(subtareaId) {
+        for (const tarea of tareas) {
+            const subtarea = tarea.subtareas?.find(st => st.id === subtareaId);
+            if (subtarea) return subtarea;
+        }
+        return null;
     }
 
     function obtenerProyecto() {

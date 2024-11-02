@@ -20,6 +20,45 @@
         color: v.$naranja;
     }
 
+    // Primero definimos los estilos base de tarea
+    .tarea {
+        padding: .5rem 2rem;
+        border-bottom: 2px solid darken(v.$grisClaro, 5%);
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        cursor: grab;  // Cursor base para tareas arrastrables
+        
+        // Estados específicos
+        &.no-draggable {
+            cursor: default !important;  // Forzar el cursor
+            
+            &:hover {
+                opacity: 1 !important;
+                
+            }
+        }
+        
+        &.dragging {
+            opacity: 0.5;
+            cursor: grabbing !important;
+        }
+        
+        &.dragover {
+            border: 2px dashed #4a90e2;
+            background-color: rgba(74, 144, 226, 0.1);
+        }
+
+        p {
+            font-size: 1.4rem;
+        }
+
+        .opciones {
+            display: flex;
+            gap: 1rem;
+        }
+    }
+
     .tarea, li, .subtareas .tarea  {
         padding: .5rem 2rem;
         border-bottom: 2px solid darken(v.$grisClaro, 5%);
