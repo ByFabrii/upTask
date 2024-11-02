@@ -21,7 +21,7 @@ class Tarea extends ActiveRecord {
         $this->descripcion = $args['descripcion'] ?? '';
         $this->estado = $args['estado'] ?? '';
         $this->proyectoId = $args['proyectoId'] ?? '';
-        $this->tareaPadreId = isset($args['tareaPadreId']) ? $args['tareaPadreId'] : null;
+        $this->tareaPadreId = $args['tareaPadreId'] ?? null;
     }
 
     public function validarTarea() {

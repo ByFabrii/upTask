@@ -8,22 +8,19 @@ use Model\Tarea;
 class TareaController {
     public static function index() {
         $proyectoId = $_GET['id'];
-
         if(!$proyectoId) header('Location: /dashboard');
-
+        
         $proyecto = Proyecto::where('url', $proyectoId);
-
         session_start();
-
-        if(!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) header('Location: /404');
-
-        // Obtiene todas las tareas relacionadas con el proyecto
+        
+        if(!$proyecto || $proyecto->propietarioId !== $_SESSION['id']) 
+            header('Location: /404');
+    
         $tareas = Tarea::belongsTo('proyectoId', $proyecto->id);
-
-        // Organiza tareas y subtareas en un array
         $tareasOrganizadas = [];
+        
+        // Primero organizamos las tareas principales
         foreach($tareas as $tarea) {
-            // Si `tareaPadreId` es null, es una tarea principal
             if(is_null($tarea->tareaPadreId)) {
                 $tareasOrganizadas[$tarea->id] = [
                     'id' => $tarea->id,
@@ -31,23 +28,25 @@ class TareaController {
                     'descripcion' => $tarea->descripcion,
                     'estado' => $tarea->estado,
                     'proyectoId' => $tarea->proyectoId,
-                    'subtareas' => [] // Array para almacenar subtareas
+                    'subtareas' => []
                 ];
-            } else {
-                // Es una subtarea, la añadimos a su tarea padre si existe
-                if (isset($tareasOrganizadas[$tarea->tareaPadreId])) {
-                    $tareasOrganizadas[$tarea->tareaPadreId]['subtareas'][] = [
-                        'id' => $tarea->id,
-                        'nombre' => $tarea->nombre,
-                        'estado' => $tarea->estado,
-                        'proyectoId' => $tarea->proyectoId,
-                        'tareaPadreId' => $tarea->tareaPadreId
-                    ];
-                }
             }
         }
-
-        // Convertimos la estructura a JSON
+        
+        // Luego organizamos las subtareas
+        foreach($tareas as $tarea) {
+            if(!is_null($tarea->tareaPadreId) && isset($tareasOrganizadas[$tarea->tareaPadreId])) {
+                $tareasOrganizadas[$tarea->tareaPadreId]['subtareas'][] = [
+                    'id' => $tarea->id,
+                    'nombre' => $tarea->nombre,
+                    'descripcion' => $tarea->descripcion,
+                    'estado' => $tarea->estado,
+                    'proyectoId' => $tarea->proyectoId,
+                    'tareaPadreId' => $tarea->tareaPadreId
+                ];
+            }
+        }
+        
         echo json_encode(['tareas' => array_values($tareasOrganizadas)]);
     }
 

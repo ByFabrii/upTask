@@ -494,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
         datos.append('nombre', tarea);
         datos.append('proyectoId', obtenerProyecto());
         
-        // No enviar el campo si es null
         if (tareaPadreId !== null) {
             datos.append('tareaPadreId', tareaPadreId);
         }
@@ -508,12 +507,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const resultado = await respuesta.json();
             
-            mostrarAlerta(
-                resultado.mensaje, 
-                resultado.tipo, 
-                document.querySelector('.formulario legend')
-            );
-    
             if(resultado.tipo === 'exito') {
                 const modal = document.querySelector('.modal');
                 setTimeout(() => {
@@ -525,11 +518,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     nombre: tarea,
                     estado: "0",
                     proyectoId: resultado.proyectoId,
-                    tareaPadreId: tareaPadreId
+                    tareaPadreId: tareaPadreId,
+                    subtareas: []
                 };
     
                 if (tareaPadreId) {
-                    // Encontrar la tarea padre y actualizar sus subtareas
                     const tareaPadre = tareas.find(t => t.id === tareaPadreId);
                     if (tareaPadre) {
                         if (!tareaPadre.subtareas) {
@@ -537,21 +530,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         tareaPadre.subtareas.push(tareaObj);
                         
-                        // Actualizar el DOM de las subtareas
                         const contenedorSubtareas = document.querySelector(`li[data-tarea-id="${tareaPadreId}"] .subtareas ul`);
                         if (contenedorSubtareas) {
                             mostrarSubtareas(tareaPadre.subtareas, contenedorSubtareas);
+                            contenedorSubtareas.closest('.subtareas').style.display = 'block';
                         }
                     }
                 } else {
-                    // Es una tarea principal
                     tareas = [...tareas, tareaObj];
                 }
                 
                 mostrarTareas();
+    
+                // Añadir alerta de éxito
+                Swal.fire({
+                    title: 'Tarea Creada',
+                    text: tareaPadreId ? 'Subtarea creada correctamente' : 'Tarea creada correctamente',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         } finally {
             ocultarLoader();
         }
