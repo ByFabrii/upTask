@@ -1,2 +1,3 @@
 node_modules
-includes/.env
+includes/
+.env
